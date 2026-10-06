@@ -1,3 +1,11 @@
+# Amanu SmartSpace fork
+
+Windows candidate with isolated YandexGPT/SpeechKit settings and offline Tracker drafts.
+Start with [SMARTSPACE.md](SMARTSPACE.md) for the fork instructions and validation limits.
+The upstream installers and signed releases linked below are the original Amanu, not this fork.
+
+---
+
 # Amanu
 
 **Records and transcribes online meetings. Automatically.**
