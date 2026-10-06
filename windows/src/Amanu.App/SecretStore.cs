@@ -6,7 +6,7 @@ namespace Amanu.App;
 
 public sealed class SecretStore
 {
-    private const string Prefix = "Amanu/";
+    private const string Prefix = "Amanu-SmartSpace/";
 
     public string? Get(string name)
     {

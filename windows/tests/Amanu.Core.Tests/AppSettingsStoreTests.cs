@@ -15,8 +15,8 @@ public sealed class AppSettingsStoreTests
 
         var load = new AppSettingsStore(configPath, Documents).Load();
 
-        Assert.Equal(Path.Combine(Documents, "Amanu Recordings"), load.Settings.RecordingsDirectory);
-        Assert.True(load.Settings.AutoRecord.Enabled);
+        Assert.Equal(Path.Combine(Documents, "Amanu SmartSpace Recordings"), load.Settings.RecordingsDirectory);
+        Assert.False(load.Settings.AutoRecord.Enabled);
         Assert.Empty(load.Problems);
         Assert.False(File.Exists(configPath));
     }
@@ -54,7 +54,7 @@ public sealed class AppSettingsStoreTests
         Assert.True(load.IsUnreadable);
         Assert.Equal("ollama", load.Settings.Summary.Backend);
         Assert.False(load.Settings.Analytics);
-        Assert.True(load.Settings.AutoRecord.Enabled);
+        Assert.False(load.Settings.AutoRecord.Enabled);
     }
 
     [Fact]
@@ -80,9 +80,9 @@ public sealed class AppSettingsStoreTests
 
         Assert.False(load.IsUnreadable);
         Assert.Equal(2, load.Problems.Count);
-        Assert.True(load.Settings.AutoRecord.Enabled);
+        Assert.False(load.Settings.AutoRecord.Enabled);
         Assert.Equal(5, load.Settings.AutoRecord.StartDelaySeconds);
-        Assert.Equal("auto", load.Settings.Summary.Backend);
+        Assert.Equal("none", load.Settings.Summary.Backend);
     }
 
     [Fact]

@@ -64,7 +64,7 @@ internal sealed class StatusWindow : Window
     public StatusWindow(AmanuRuntime runtime)
     {
         this.runtime = runtime;
-        Title = "Amanu";
+        Title = "Amanu SmartSpace";
 #if DEBUG
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AMANU_TEST_DATA")))
             Title = "Amanu — Live transcript test";

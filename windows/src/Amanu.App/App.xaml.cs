@@ -10,8 +10,8 @@ namespace Amanu.App;
 
 public partial class App : System.Windows.Application
 {
-    private const string InstanceName = "Local\\Amanu.Desktop.SingleInstance";
-    private const string DoorbellName = "Local\\Amanu.Desktop.ShowWindow";
+    private const string InstanceName = "Local\\Amanu.SmartSpace.Desktop.SingleInstance";
+    private const string DoorbellName = "Local\\Amanu.SmartSpace.Desktop.ShowWindow";
 
     private static AmanuRuntime? runtime;
     private static StatusWindow? status;
@@ -106,7 +106,7 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Amanu Data", "errors.log");
+            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Amanu SmartSpace Data", "errors.log");
             File.AppendAllText(path, $"{DateTimeOffset.Now:O} {exception}{Environment.NewLine}{Environment.NewLine}");
         }
         catch (Exception logging) when (logging is IOException or UnauthorizedAccessException) { }

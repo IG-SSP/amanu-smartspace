@@ -21,7 +21,7 @@ internal sealed class SettingsWindow : Window
     public SettingsWindow(AmanuRuntime runtime)
     {
         this.runtime = runtime;
-        Title = T("Amanu Settings", "Настройки Amanu");
+        Title = T("Amanu SmartSpace Settings", "Настройки Amanu SmartSpace");
         MinWidth = 700;
         MinHeight = 480;
         Ui.FitToWorkArea(this, 860, 820);
@@ -99,7 +99,7 @@ internal sealed class SetupWindow : Window
 
     public SetupWindow(AmanuRuntime runtime)
     {
-        Title = T("Setting up Amanu", "Первая настройка Amanu");
+        Title = T("Setting up Amanu SmartSpace", "Первая настройка Amanu SmartSpace");
         MinWidth = 700;
         MinHeight = 480;
         Ui.FitToWorkArea(this, 860, 820);

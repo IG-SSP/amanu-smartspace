@@ -44,6 +44,7 @@ public static class EngineResolver
 
     public static string DisplayName(string engine) => engine switch
     {
+        "speechkit" => "Yandex SpeechKit",
         "assemblyai" => "AssemblyAI",
         "openai" => "OpenAI",
         "elevenlabs" => "ElevenLabs",

@@ -393,7 +393,7 @@ public sealed class ProcessingCoordinator : IAsyncDisposable
 
         var engine = ReadText(directory, "transcribe.engine") ?? current.Transcription.Engine;
         var plan = EngineResolver.Plan(engine, current.Transcription.Cloud, current.Transcription.LocalEngine,
-            provider => !string.IsNullOrWhiteSpace(secrets.Get(provider)), models.IsReady);
+            provider => !string.IsNullOrWhiteSpace(secrets.Get(SecretNames.ForProvider(provider))), models.IsReady);
         if (!plan.Usable)
         {
             await DeferAsync(directory, "transcribe.deferred", plan.Missing!, cancellationToken).ConfigureAwait(false);
@@ -504,11 +504,12 @@ public sealed class ProcessingCoordinator : IAsyncDisposable
 
     public ITranscriptionEngine CreateCloud(string provider, AppSettings current, bool cache)
     {
-        var key = secrets.Get(provider) ?? throw new ProcessingFailure(FailureKind.Environmental,
+        var key = secrets.Get(SecretNames.ForProvider(provider)) ?? throw new ProcessingFailure(FailureKind.Environmental,
             T($"{EngineResolver.DisplayName(provider)} needs a key.", $"Для {EngineResolver.DisplayName(provider)} нужен ключ."));
         var expected = MeetingLanguages.Expected(current.Transcription.Language);
         return provider switch
         {
+            "speechkit" => new SpeechKitTranscriptionEngine(key, current.Yandex, current.Transcription.Language),
             "openai" => new OpenAiTranscriptionEngine(httpClient, key, current.Transcription.OpenAi.Model, MeetingLanguages.Pin(expected), cache),
             "elevenlabs" => new ElevenLabsTranscriptionEngine(httpClient, key, cache),
             _ => new AssemblyAiTranscriptionEngine(httpClient, key, expected, current.Transcription.AssemblyAi.SpeechModel, cache),

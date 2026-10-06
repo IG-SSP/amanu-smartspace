@@ -61,6 +61,15 @@ public static class SettingsSchema
 {
     public static IReadOnlyList<SettingSection> Sections =>
     [
+        new("Yandex Cloud",
+        [
+            new("yandex.folder_id", "Folder ID", "Каталог Yandex Cloud. API-ключ хранится отдельно в Windows Credential Manager.", SettingKind.Text),
+            new("yandex.model", "Модель YandexGPT", "Имя модели и версия, например yandexgpt/latest.", SettingKind.Text),
+            new("yandex.speechkit_model", "Распознавание SpeechKit", "deferred-general дешевле, но результат может ожидаться до суток. general — быстрее. Два аудиоканала сохраняют стороны звонка; отдельные голоса внутри канала не различаются.", SettingKind.Choice, Options: ["general", "deferred-general"]),
+            new("yandex.max_output_tokens", "Лимит ответа", "Максимум токенов ответа: 1–32000, в пределах лимита выбранной модели.", SettingKind.Number),
+            new("yandex.vocabulary", "Словарь встречи", "Названия объектов, оборудования и участников. Справочник не является доказательством сказанного.", SettingKind.MultilineText),
+            new("yandex.meeting_protocol", "Протокол совещания", "Решения, задачи, ответственные и сроки в одном проходе. Собственный шаблон имеет приоритет.", SettingKind.Toggle),
+        ]),
         new(T("Recording by itself", "Запись сама по себе"),
         [
             new("auto_record.enabled",

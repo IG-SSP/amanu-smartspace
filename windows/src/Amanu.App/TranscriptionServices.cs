@@ -58,6 +58,12 @@ internal static class ProviderCache
         if (!System.IO.Directory.Exists(directory)) return;
         foreach (var file in System.IO.Directory.EnumerateFiles(directory, ".cache-*.json")) File.Delete(file);
         File.Delete(System.IO.Path.Combine(directory, ".assemblyai-job.json"));
+        // Forced retranscription may redo completed chunks; preserve pending/uncertain jobs.
+        foreach (var result in System.IO.Directory.EnumerateFiles(directory, ".speechkit-*.result.ndjson"))
+        {
+            File.Delete(result.Replace(".result.ndjson", ".job.json", StringComparison.Ordinal));
+            File.Delete(result);
+        }
     }
 
     public static string KeyDigest(string key) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(key)))[..16];

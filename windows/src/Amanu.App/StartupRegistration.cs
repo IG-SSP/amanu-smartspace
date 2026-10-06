@@ -5,7 +5,7 @@ namespace Amanu.App;
 public static class StartupRegistration
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "Amanu";
+    private const string ValueName = "Amanu SmartSpace";
 
     public static void SetEnabled(bool enabled)
     {

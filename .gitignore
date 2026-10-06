@@ -10,3 +10,5 @@ dist/
 windows/.tools/
 windows/artifacts/
 /artifacts/live-validation/
+
+**/__pycache__/

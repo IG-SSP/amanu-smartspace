@@ -191,11 +191,12 @@ internal sealed class SetupForm
     private Border TranscriptionBox(FrameworkElement cloudKeyView)
     {
         var cloudRow = Ui.Row(cloud, Ui.Title(T("In the cloud", "В облаке")),
-            Ui.Detail(T("Audio is uploaded to the provider’s servers. Better on Russian, and tells apart multiple speakers.",
-                "Звук уходит на серверы провайдера. Лучше слышит русский и различает нескольких говорящих.")));
+            Ui.Detail(T("Audio is uploaded to the chosen provider. Speaker separation depends on the engine.",
+                "Звук уходит выбранному провайдеру. Разделение голосов зависит от движка.")));
 
         var providers = new (string Id, string Title, string Detail, string Url)[]
         {
+            ("speechkit", "Yandex SpeechKit", "Ключ как для YandexGPT. Folder ID и режим ожидания — в Дополнительно. Разделение микрофона и звонка, без распознавания отдельных голосов внутри канала.", "https://console.yandex.cloud"),
             ("assemblyai", "AssemblyAI", T("$0.23 an hour. No limit on meeting length.", "$0,23 за час. Без ограничения на длину встречи."), "https://www.assemblyai.com/dashboard/signup"),
             ("openai", "OpenAI", T("$0.36 an hour. Same key as summaries.", "$0,36 за час. Тот же ключ, что и для саммари."), "https://platform.openai.com/api-keys"),
             ("elevenlabs", "ElevenLabs", T("Scribe v2. $0.44 an hour for a two-channel call.", "Scribe v2. $0,44 за час разговора с двумя каналами."), "https://elevenlabs.io/app/developers/api-keys"),
@@ -292,6 +293,7 @@ internal sealed class SetupForm
         keyProvider.Items.Add(new ComboBoxItem { Content = "OpenAI", Tag = "openai-api" });
         keyProvider.Items.Add(new ComboBoxItem { Content = "Anthropic", Tag = "anthropic-api" });
         keyProvider.Items.Add(new ComboBoxItem { Content = "OpenAI-compatible", Tag = "openai-compatible" });
+        keyProvider.Items.Add(new ComboBoxItem { Content = "Yandex Cloud", Tag = "yandex" });
         openAiBaseRow = FieldRow(T("Base URL", "URL сервера"), openAiBaseView);
         openAiOptions.Children.Add(openAiBaseRow);
         summaryKeyLink = Ui.Link(T("Get a key", "Получить ключ"), "https://console.anthropic.com/settings/keys");
@@ -383,7 +385,7 @@ internal sealed class SetupForm
         analytics.Click += (_, _) => Change(settings => settings.Analytics = analytics.IsChecked == true);
     }
 
-    private string SelectedKeyBackend => keyProvider.SelectedIndex == 1 ? "anthropic-api" : "openai-api";
+    private string SelectedKeyBackend => keyProvider.SelectedIndex == 3 ? "yandex" : keyProvider.SelectedIndex == 1 ? "anthropic-api" : "openai-api";
 
     private void Change(Action<AppSettings> change)
     {
@@ -423,7 +425,7 @@ internal sealed class SetupForm
         }
     }
 
-    private bool HasKey(string name) => !string.IsNullOrWhiteSpace(runtime.GetSecret(name));
+    private bool HasKey(string name) => !string.IsNullOrWhiteSpace(runtime.GetSecret(SecretNames.ForProvider(name)));
 
     private string ShownProvider => pendingProvider ?? runtime.Settings.Transcription.Cloud;
 
@@ -444,7 +446,7 @@ internal sealed class SetupForm
         Refresh();
     }
 
-    private string SummaryKeySlot => SelectedKeyBackend == "anthropic-api" ? SecretNames.Anthropic
+    private string SummaryKeySlot => SelectedKeyBackend == "yandex" ? SecretNames.Yandex : SelectedKeyBackend == "anthropic-api" ? SecretNames.Anthropic
         : keyProvider.SelectedIndex == 2 ? SecretNames.OpenAiCompatible : SecretNames.OpenAi;
 
     private async Task SaveSummaryKeyAsync()
@@ -453,7 +455,7 @@ internal sealed class SetupForm
         if (key.Length == 0) return;
         var slot = SummaryKeySlot;
         bool saved;
-        if (slot == SecretNames.OpenAiCompatible)
+        if (slot is SecretNames.OpenAiCompatible or SecretNames.Yandex)
         {
             // A compatible server has no one place to check a key against.
             runtime.SetSecret(slot, key);
@@ -467,6 +469,13 @@ internal sealed class SetupForm
 
     private async Task<bool> CheckAndSaveAsync(string slot, string key, TextBlock status)
     {
+        slot = SecretNames.ForProvider(slot);
+        if (slot == SecretNames.Yandex)
+        {
+            runtime.SetSecret(slot, key);
+            status.Text = "Ключ сохранён; проверка будет при обработке выбранной встречи.";
+            return true;
+        }
         status.Text = T("checking…", "проверяю…");
         status.SetResourceReference(TextBlock.ForegroundProperty, Ui.Secondary);
         var (verdict, message) = await KeyCheck.CheckAsync(runtime.Http, slot, key, CancellationToken.None);
@@ -724,7 +733,7 @@ internal sealed class SetupForm
 
             summaries.IsChecked = settings.Summary.Enabled;
             var backend = settings.Summary.Backend;
-            var chosen = backend is "anthropic-api" or "openai-api" ? "api-key" : backend;
+            var chosen = backend is "anthropic-api" or "openai-api" or "yandex" ? "api-key" : backend;
             foreach (var (id, item) in summaryCards)
             {
                 item.IsChecked = id == chosen;
@@ -740,8 +749,8 @@ internal sealed class SetupForm
                 _ => "",
             };
             summaryAuto.Visibility = summaryAuto.Text.Length > 0 && settings.Summary.Enabled ? Visibility.Visible : Visibility.Collapsed;
-            if (backend is "anthropic-api" or "openai-api")
-                keyProvider.SelectedIndex = backend == "anthropic-api" ? 1 : settings.Summary.UsesCompatibleOpenAi ? 2 : 0;
+            if (backend is "anthropic-api" or "openai-api" or "yandex")
+                keyProvider.SelectedIndex = backend == "yandex" ? 3 : backend == "anthropic-api" ? 1 : settings.Summary.UsesCompatibleOpenAi ? 2 : 0;
             else keyProvider.SelectedIndex = keyProvider.SelectedIndex < 0 ? 1 : keyProvider.SelectedIndex;
             var openAi = SelectedKeyBackend == "openai-api";
             openAiOptions.Visibility = openAi ? Visibility.Visible : Visibility.Collapsed;
@@ -750,9 +759,12 @@ internal sealed class SetupForm
             {
                 summaryKeyLink.Visibility = keyProvider.SelectedIndex == 2 ? Visibility.Collapsed : Visibility.Visible;
                 if (summaryKeyLink.Inlines.OfType<System.Windows.Documents.Hyperlink>().FirstOrDefault() is { } keyLink)
-                    keyLink.NavigateUri = new Uri(openAi ? "https://platform.openai.com/api-keys" : "https://console.anthropic.com/settings/keys");
+                    keyLink.NavigateUri = new Uri(SelectedKeyBackend == "yandex" ? "https://console.yandex.cloud" : openAi ? "https://platform.openai.com/api-keys" : "https://console.anthropic.com/settings/keys");
             }
-            summaryKeyStatus.Text = HasKey(SummaryKeySlot) ? T("key saved", "ключ сохранён") : T("no key yet", "ключа ещё нет");
+            summaryKeyStatus.Text = SelectedKeyBackend == "yandex"
+                ? (HasKey(SecretNames.Yandex) ? "Ключ сохранён. " : "Нужен API-ключ. ") +
+                  (string.IsNullOrWhiteSpace(settings.Yandex.FolderId) ? "Укажите Folder ID в Дополнительно → Yandex Cloud." : "Folder ID задан. Логирование запросов отключено.")
+                : HasKey(SummaryKeySlot) ? T("key saved", "ключ сохранён") : T("no key yet", "ключа ещё нет");
             summaryKeyStatus.SetResourceReference(TextBlock.ForegroundProperty, HasKey(SummaryKeySlot) ? Ui.Good : Ui.Secondary);
             if (!openAiBaseUrl.IsKeyboardFocused) openAiBaseUrl.Text = settings.Summary.OpenAiBaseUrl == new SummarySettings().OpenAiBaseUrl ? "" : settings.Summary.OpenAiBaseUrl;
             if (!openAiModel.IsKeyboardFocused) openAiModel.Text = settings.Summary.OpenAiModel == new SummarySettings().OpenAiModel ? "" : settings.Summary.OpenAiModel;

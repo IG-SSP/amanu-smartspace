@@ -62,7 +62,7 @@ public static class LanguageModelChain
     public static IReadOnlyList<string> Allowed(string preference, Func<string, bool> present) =>
         preference == "auto"
             ? Order.Where(present).ToArray()
-            : Order.Contains(preference) && present(preference) ? [preference] : [];
+            : (Order.Contains(preference) || preference == "yandex") && present(preference) ? [preference] : [];
 }
 
 /// <summary>Which key goes to which server. A key is only ever sent to the service it belongs to.</summary>

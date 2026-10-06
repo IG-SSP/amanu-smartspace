@@ -205,12 +205,12 @@ public sealed class AmanuRuntime : IAsyncDisposable
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         // Not %LOCALAPPDATA%\Amanu: that is where Velopack installs the program,
         // and uninstalling removes the folder with everything in it.
-        var dataDirectory = Path.Combine(localData, "Amanu Data");
+        var dataDirectory = Path.Combine(localData, "Amanu SmartSpace Data");
 #if DEBUG
         if (Environment.GetEnvironmentVariable("AMANU_TEST_DATA") is { Length: > 0 } testDirectory)
             dataDirectory = Path.GetFullPath(testDirectory);
 #endif
-        MoveOutOfInstallFolder(Path.Combine(localData, "Amanu"), dataDirectory);
+        // Fork has independent data; do not migrate the upstream installation.
         Directory.CreateDirectory(dataDirectory);
         var store = new AppSettingsStore(Path.Combine(dataDirectory, "config.json"), home);
         Current = Choose(store.Load().Settings.InterfaceLanguage, CultureInfo.CurrentUICulture.Name);

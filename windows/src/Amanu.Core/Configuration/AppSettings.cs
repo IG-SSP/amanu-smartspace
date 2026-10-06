@@ -27,7 +27,7 @@ public sealed class AppSettings
     public bool KeepAudio { get; set; }
 
     [JsonPropertyName("analytics")]
-    public bool Analytics { get; set; } = true;
+    public bool Analytics { get; set; }
 
     [JsonPropertyName("interface_language")]
     public string InterfaceLanguage { get; set; } = "auto";
@@ -54,11 +54,14 @@ public sealed class AppSettings
     [JsonPropertyName("summary")]
     public SummarySettings Summary { get; set; } = new();
 
+    [JsonPropertyName("yandex")]
+    public YandexCloudSettings Yandex { get; set; } = new();
+
     [JsonPropertyName("speaker_names")]
     public SpeakerNameSettings SpeakerNames { get; set; } = new();
 
     [JsonPropertyName("start_at_login")]
-    public bool StartAtLogin { get; set; } = true;
+    public bool StartAtLogin { get; set; }
 
     [JsonPropertyName("tray_icon")]
     public bool TrayIcon { get; set; } = true;
@@ -69,7 +72,7 @@ public sealed class AppSettings
     [JsonPropertyName("on_stop")]
     public CommandHook? OnStop { get; set; }
 
-    /// <summary>Everything the file held that no property above reads — kept so a save never drops it.</summary>
+    /// <summary>Unknown settings are preserved when saving.</summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Unknown { get; set; }
 
@@ -79,11 +82,16 @@ public sealed class AppSettings
     /// travelling to a cloud nobody chose for them.
     /// </summary>
     public static string DefaultRecordingsDirectory(string homeDirectory) =>
-        Path.Combine(homeDirectory, "Amanu Recordings");
+        Path.Combine(homeDirectory, "Amanu SmartSpace Recordings");
 
     public static AppSettings CreateDefault(string homeDirectory) => new()
     {
         RecordingsDirectory = DefaultRecordingsDirectory(homeDirectory),
+        Analytics = false,
+        Transcription = new() { Engine = "parakeet" },
+        Summary = new() { Backend = "none" },
+        StartAtLogin = false,
+        AutoRecord = new() { Enabled = false },
     };
 
     /// <summary>
@@ -111,7 +119,7 @@ public sealed class AppSettings
 public sealed class AutoRecordSettings
 {
     [JsonPropertyName("enabled")]
-    public bool Enabled { get; set; } = true;
+    public bool Enabled { get; set; }
 
     [JsonPropertyName("mic_activity")]
     public bool MicrophoneActivity { get; set; } = true;
@@ -161,7 +169,7 @@ public sealed class AutoRecordSettings
 
 public sealed class TranscriptionSettings
 {
-    public static readonly IReadOnlyList<string> CloudEngines = ["assemblyai", "openai", "elevenlabs"];
+    public static readonly IReadOnlyList<string> CloudEngines = ["assemblyai", "openai", "elevenlabs", "speechkit"];
     public static readonly IReadOnlyList<string> LocalEngines = ["parakeet", "whisper", "gigaam"];
 
     [JsonPropertyName("enabled")]
@@ -173,7 +181,7 @@ public sealed class TranscriptionSettings
     /// nothing else; a local engine's name means nothing leaves the machine.
     /// </summary>
     [JsonPropertyName("engine")]
-    public string Engine { get; set; } = "auto";
+    public string Engine { get; set; } = "parakeet";
 
     [JsonPropertyName("cloud")]
     public string Cloud { get; set; } = "assemblyai";
@@ -212,13 +220,13 @@ public sealed class LiveTranscriptionSettings
 public sealed class SummarySettings
 {
     public static readonly IReadOnlyList<string> Backends =
-        ["auto", "claude-cli", "anthropic-api", "codex-cli", "openai-api", "ollama", "none"];
+        ["auto", "claude-cli", "anthropic-api", "codex-cli", "openai-api", "yandex", "ollama", "none"];
 
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; } = true;
 
     [JsonPropertyName("backend")]
-    public string Backend { get; set; } = "auto";
+    public string Backend { get; set; } = "none";
 
     [JsonPropertyName("language")]
     public string? Language { get; set; }
@@ -270,7 +278,7 @@ public sealed class SummarySettings
 public sealed class SpeakerNameSettings
 {
     public static readonly IReadOnlyList<string> Backends =
-        ["summary", "auto", "claude-cli", "anthropic-api", "codex-cli", "openai-api", "ollama", "none"];
+        ["summary", "auto", "claude-cli", "anthropic-api", "codex-cli", "openai-api", "yandex", "ollama", "none"];
 
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; } = true;
@@ -293,4 +301,20 @@ public sealed class CommandHook
 
     [JsonPropertyName("arguments")]
     public List<string> Arguments { get; set; } = [];
+}
+
+public sealed class YandexCloudSettings
+{
+    [JsonPropertyName("folder_id")]
+    public string FolderId { get; set; } = "";
+    [JsonPropertyName("model")]
+    public string Model { get; set; } = "yandexgpt/latest";
+    [JsonPropertyName("speechkit_model")]
+    public string SpeechKitModel { get; set; } = "deferred-general";
+    [JsonPropertyName("max_output_tokens")]
+    public int MaxOutputTokens { get; set; } = 4000;
+    [JsonPropertyName("vocabulary")]
+    public string Vocabulary { get; set; } = "";
+    [JsonPropertyName("meeting_protocol")]
+    public bool MeetingProtocol { get; set; } = true;
 }
